@@ -96,3 +96,246 @@ hc <- hc %>%
   
 # Save tidy data
 save(hc, file = here::here("data", "tidy_data", "case_study_1_tidy.rda"))
+
+
+# load tidy data ----------------------------------------------------------
+
+
+# load data
+load(here::here("data", "tidy_data", "case_study_1_tidy.rda"))
+hc
+
+
+# Visualize data set ------------------------------------------------------
+
+
+# install.packages("visdat")
+library(visdat)
+
+# visualize data
+vis_dat(hc)
+
+# visualize missiing data
+vis_miss(hc)
+
+hc |> 
+  filter(is.na(tot_coverage))
+
+
+# Summarize data set ------------------------------------------------------
+
+
+library(skimr)
+
+# get summary of the data
+skim(hc)
+
+# group by year
+hc %>% 
+  group_by(year) %>%
+  skim()
+
+
+# Q1: Relationship between coverage and spending? -------------------------
+
+# coverage vs spending
+hc %>%
+  filter(type == "Employer", 
+         year == "2013") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage)) +
+  geom_point() + 
+  labs(x = "spending per capita",
+       y = "coverage proportion")
+
+# generate scatterplot with fit line
+hc %>%
+  filter(type == "Employer", 
+         year == "2013") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage)) + 
+  geom_point() + 
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red")
+
+# add state abbreviation labels
+hc %>%
+  filter(type == "Employer", 
+         year == "2013") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage)) + 
+  geom_point() + 
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150)
+
+# color by region
+hc %>%
+  filter(type == "Employer", 
+         year == "2013") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + ######
+  geom_point() + 
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150, 
+            show.legend = FALSE) ######
+
+# create facets by year
+hc %>%
+  filter(type == "Employer") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + 
+  geom_point() + 
+  facet_wrap(~year) + #######
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150, 
+            show.legend = FALSE)
+
+# We see that the overall trend holds, but there has been some movement.
+# For example, we see at a glance that DC has a higher proportion of its
+# population covered in 2014 relative to 2013, while MA saw a drop in coverage.
+# UT appears to be an outlier in both years having low spending but a high
+# proportion of individuals covered.
+
+# visualize 2013 data by type
+hc %>%
+  filter(year == "2013") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + 
+  geom_point() + 
+  facet_wrap(~type) +
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150, 
+            show.legend = FALSE)
+
+# visualize 2014 data by type
+hc %>%
+  filter(year == "2014") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + 
+  geom_point() + 
+  facet_wrap(~type) +
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150, 
+            show.legend = FALSE)
+
+# From these data, we see that Employer health care coverage is the most popular
+# way in which individuals receive their health insurance across all states. 
+# We also see a flat or positive relationship for all other types of insurance, 
+# except for “Uninsured”. We see that the more money spent per capita the fewer
+# individuals the state has without insurance, as one might expect.
+
+
+# save plots --------------------------------------------------------------
+
+pdf(here::here("figures", "exploratory", "2013and2014_spending_and_coverage.pdf"))
+
+hc %>%
+  filter(type == "Employer") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + 
+  geom_point() + 
+  facet_wrap(~year) +
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150, 
+            show.legend = FALSE)
+
+dev.off()
+
+pdf(here::here("figures", "exploratory", "2013_coverage_type.pdf"))
+hc %>%
+  filter(year == "2013") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + 
+  geom_point() + 
+  facet_wrap(~type) +
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150, 
+            show.legend = FALSE)
+
+dev.off()
+
+pdf(here::here("figures", "exploratory", "2014_coverage_type.pdf"))
+
+hc %>%
+  filter(year == "2014") %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + 
+  geom_point() + 
+  facet_wrap(~type) +
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  geom_text(aes(label=abb), 
+            nudge_x = 150, 
+            show.legend = FALSE)
+
+dev.off()
+
+
+# Q2: Spending Across Geographic Regions? ---------------------------------
+
+# generate boxplot
+hc %>% 
+  ggplot(aes(x = region, 
+             y = spending_capita)) + 
+  geom_boxplot() +
+  labs(y = "spending per capita")
+
+# add data points to boxplot
+hc %>% 
+  filter(type == "Employer") %>%
+  ggplot(aes(x = region, 
+             y = spending_capita)) + 
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(alpha = 0.2) +
+  labs(y = "spending per capita")
+
+# Q3: Coverage and Spending Change Over Time? -----------------------------
+
+# color by region
+hc %>% 
+  ggplot(aes(x = spending_capita, 
+             y = prop_coverage,
+             color = region)) + 
+  geom_point() + 
+  labs(x = "spending per capita",
+       y = "coverage proportion") +
+  geom_smooth(method = "lm", col = "red") + 
+  facet_grid(year~type)
+
+# Visually, we can start to get a sense that a few things changed from 
+# 2013 to 2014. For example, as we saw previously, individual states changed
+# from one year to the next, but overall patterns seem to hold pretty steady
+# between these two years.
+
+
+
